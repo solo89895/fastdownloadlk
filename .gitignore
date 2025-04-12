@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+frontend/
 .env
 .env.local
 .env.development
@@ -26,4 +27,7 @@ yarn-error.log*
 
 # System Files
 .DS_Store
-Thumbs.db 
+Thumbs.db
+
+# Temporary files
+tmp/ 
