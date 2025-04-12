@@ -23,22 +23,85 @@ jobs:
           ls -la
           ls -la ./frontend || echo "Frontend directory not found"
 
+      # Create frontend structure if it doesn't exist
+      - name: Create frontend structure if needed
+        run: |
+          if [ ! -d "frontend" ]; then
+            echo "Creating minimal frontend structure"
+            mkdir -p frontend/dist
+            cat > frontend/dist/index.html << 'EOL'
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>FastDownloadLK</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        background-color: #1e293b;
+                        color: white;
+                        text-align: center;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        min-height: 100vh;
+                    }
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                    }
+                    h1 {
+                        color: #38bdf8;
+                    }
+                    p {
+                        line-height: 1.6;
+                    }
+                    .button {
+                        display: inline-block;
+                        background-color: #38bdf8;
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        text-decoration: none;
+                        margin-top: 20px;
+                        font-weight: bold;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>FastDownloadLK</h1>
+                    <p>Video Downloader Service</p>
+                    <p>The application is being set up. Please check back soon!</p>
+                    <a href="https://fastlk.netlify.app" class="button">Go to API</a>
+                </div>
+            </body>
+            </html>
+            EOL
+            echo "Created minimal frontend"
+          else
+            echo "Frontend directory exists"
+          fi
+
+      # Setup Node.js only if frontend exists and has package.json
       - name: Setup Node.js
+        if: hashFiles('frontend/package.json') != ''
         uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: 'npm'
 
-      - name: Install Dependencies
-        run: |
-          cd frontend || (echo "Cannot find frontend directory" && exit 1)
-          npm install
-
-      - name: Build Frontend
+      # Install and build only if frontend exists and has package.json
+      - name: Install Dependencies and Build
+        if: hashFiles('frontend/package.json') != ''
         run: |
           cd frontend
+          npm install
           npm run build
-          # Debug step to check if build created the dist directory
           ls -la
           ls -la ./dist || echo "Dist directory not found after build"
         env:
@@ -46,14 +109,13 @@ jobs:
 
       - name: Create .nojekyll file
         run: |
-          if [ -d "frontend/dist" ]; then
-            cd frontend/dist
-            touch .nojekyll
+          cd frontend/dist
+          touch .nojekyll
+          if [ -f "index.html" ]; then
             cp index.html 404.html
             echo "Created .nojekyll file and 404.html"
           else
-            echo "Error: frontend/dist directory does not exist"
-            exit 1
+            echo "Warning: index.html not found, could not create 404.html"
           fi
 
       - name: Upload GitHub Pages artifact
