@@ -29,59 +29,7 @@ jobs:
           if [ ! -d "frontend" ]; then
             echo "Creating minimal frontend structure"
             mkdir -p frontend/dist
-            cat > frontend/dist/index.html << 'EOL'
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>FastDownloadLK</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 20px;
-                        background-color: #1e293b;
-                        color: white;
-                        text-align: center;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        min-height: 100vh;
-                    }
-                    .container {
-                        max-width: 800px;
-                        margin: 0 auto;
-                    }
-                    h1 {
-                        color: #38bdf8;
-                    }
-                    p {
-                        line-height: 1.6;
-                    }
-                    .button {
-                        display: inline-block;
-                        background-color: #38bdf8;
-                        color: white;
-                        padding: 10px 20px;
-                        border-radius: 5px;
-                        text-decoration: none;
-                        margin-top: 20px;
-                        font-weight: bold;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>FastDownloadLK</h1>
-                    <p>Video Downloader Service</p>
-                    <p>The application is being set up. Please check back soon!</p>
-                    <a href="https://fastlk.netlify.app" class="button">Go to API</a>
-                </div>
-            </body>
-            </html>
-            EOL
+            echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FastDownloadLK</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background-color:#1e293b;color:white;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}.container{max-width:800px;margin:0 auto}h1{color:#38bdf8}p{line-height:1.6}.button{display:inline-block;background-color:#38bdf8;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;margin-top:20px;font-weight:bold}</style></head><body><div class="container"><h1>FastDownloadLK</h1><p>Video Downloader Service</p><p>The application is being set up. Please check back soon!</p><a href="https://fastlk.netlify.app" class="button">Go to API</a></div></body></html>' > frontend/dist/index.html
             echo "Created minimal frontend"
           else
             echo "Frontend directory exists"
