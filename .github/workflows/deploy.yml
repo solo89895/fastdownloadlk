@@ -11,11 +11,12 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,19 +30,22 @@ jobs:
         uses: actions/configure-pages@v3
 
       - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
+        run: |
+          cd frontend
+          npm ci
 
       - name: Build
-        working-directory: ./frontend
-        run: npm run build
+        run: |
+          cd frontend
+          npm run build
         env:
           VITE_API_URL: 'https://fastlk.netlify.app'
 
-      - name: Upload artifact
+      - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: frontend/dist
+          path: ./frontend/dist
 
       - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2 
+        uses: actions/deploy-pages@v2
+        id: deployment 
