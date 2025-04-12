@@ -30,19 +30,16 @@ jobs:
         env:
           VITE_API_URL: 'https://fastlk.netlify.app'
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./frontend/dist
-          destination: ./_site
+      - name: Create .nojekyll file
+        run: |
+          cd frontend/dist
+          touch .nojekyll
+          cp index.html 404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ./_site
+          path: frontend/dist
 
   deploy:
     needs: build
