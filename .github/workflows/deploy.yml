@@ -20,20 +20,23 @@ jobs:
       # Debug step to show repository structure
       - name: List repository contents
         run: |
+          pwd
+          echo "Current working directory contents:"
           ls -la
+          echo "Checking for frontend directory:"
           ls -la ./frontend || echo "Frontend directory not found"
 
       # Create frontend structure if it doesn't exist
       - name: Create frontend structure if needed
         run: |
-          if [ ! -d "frontend" ]; then
-            echo "Creating minimal frontend structure"
-            mkdir -p frontend/dist
-            echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FastDownloadLK</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background-color:#1e293b;color:white;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}.container{max-width:800px;margin:0 auto}h1{color:#38bdf8}p{line-height:1.6}.button{display:inline-block;background-color:#38bdf8;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;margin-top:20px;font-weight:bold}</style></head><body><div class="container"><h1>FastDownloadLK</h1><p>Video Downloader Service</p><p>The application is being set up. Please check back soon!</p><a href="https://fastlk.netlify.app" class="button">Go to API</a></div></body></html>' > frontend/dist/index.html
-            echo "Created minimal frontend"
-          else
-            echo "Frontend directory exists"
-          fi
+          echo "Creating or verifying frontend directories"
+          mkdir -p frontend/dist
+          echo "Checking directories were created:"
+          ls -la
+          ls -la ./frontend
+          ls -la ./frontend/dist || echo "Failed to create dist directory"
+          echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FastDownloadLK</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;background-color:#1e293b;color:white;text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh}.container{max-width:800px;margin:0 auto}h1{color:#38bdf8}p{line-height:1.6}.button{display:inline-block;background-color:#38bdf8;color:white;padding:10px 20px;border-radius:5px;text-decoration:none;margin-top:20px;font-weight:bold}</style></head><body><div class="container"><h1>FastDownloadLK</h1><p>Video Downloader Service</p><p>The application is being set up. Please check back soon!</p><a href="https://fastlk.netlify.app" class="button">Go to API</a></div></body></html>' > frontend/dist/index.html
+          echo "Frontend structure prepared"
 
       # Setup Node.js only if frontend exists and has package.json
       - name: Setup Node.js
@@ -55,8 +58,11 @@ jobs:
         env:
           VITE_API_URL: 'https://fastlk.netlify.app'
 
+      # Always ensure .nojekyll file exists
       - name: Create .nojekyll file
         run: |
+          echo "Creating .nojekyll file"
+          mkdir -p frontend/dist
           cd frontend/dist
           touch .nojekyll
           if [ -f "index.html" ]; then
@@ -64,7 +70,13 @@ jobs:
             echo "Created .nojekyll file and 404.html"
           else
             echo "Warning: index.html not found, could not create 404.html"
+            echo "Creating minimal index.html file"
+            echo '<!DOCTYPE html><html><head><title>FastDownloadLK</title></head><body><h1>Page Not Found</h1><p>Return to <a href="/">home page</a>.</p></body></html>' > index.html
+            cp index.html 404.html
+            echo "Created basic index.html and 404.html files"
           fi
+          echo "Contents of frontend/dist directory:"
+          ls -la
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
