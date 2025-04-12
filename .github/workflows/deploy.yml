@@ -17,6 +17,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Debug step to show repository structure
+      - name: List repository contents
+        run: |
+          ls -la
+          ls -la ./frontend || echo "Frontend directory not found"
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -24,20 +30,31 @@ jobs:
           cache: 'npm'
 
       - name: Install Dependencies
-        working-directory: ./frontend
-        run: npm install
+        run: |
+          cd frontend || (echo "Cannot find frontend directory" && exit 1)
+          npm install
 
       - name: Build Frontend
-        working-directory: ./frontend
-        run: npm run build
+        run: |
+          cd frontend
+          npm run build
+          # Debug step to check if build created the dist directory
+          ls -la
+          ls -la ./dist || echo "Dist directory not found after build"
         env:
           VITE_API_URL: 'https://fastlk.netlify.app'
 
       - name: Create .nojekyll file
         run: |
-          cd frontend/dist
-          touch .nojekyll
-          cp index.html 404.html
+          if [ -d "frontend/dist" ]; then
+            cd frontend/dist
+            touch .nojekyll
+            cp index.html 404.html
+            echo "Created .nojekyll file and 404.html"
+          else
+            echo "Error: frontend/dist directory does not exist"
+            exit 1
+          fi
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
