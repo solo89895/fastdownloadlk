@@ -26,82 +26,19 @@ jobs:
           echo "Repository contents:"
           find . -type d -maxdepth 2 | sort
 
-      # Try to locate frontend directory
-      - name: Locate Frontend
+      - name: Create deployment directory
         run: |
-          echo "Looking for frontend directory..."
-          if [ -d "frontend" ]; then
-            echo "Found frontend directory"
-            ls -la frontend
-          elif [ -d "video-downloader-frontend" ]; then
-            echo "Found video-downloader-frontend directory, linking to frontend"
-            ln -s video-downloader-frontend frontend
-          else
-            echo "Creating frontend directory structure"
-            mkdir -p frontend/src
-            echo "console.log('Hello world');" > frontend/src/index.js
-            echo '{
-              "name": "video-downloader-frontend",
-              "version": "1.0.0",
-              "scripts": {
-                "build": "mkdir -p dist && echo \"<!DOCTYPE html><html><head><title>Video Downloader</title></head><body><h1>Video Downloader</h1><p>This is a placeholder page. The actual frontend is still being set up.</p><a href=\"https://fastlk.netlify.app\">Go to API</a></body></html>\" > dist/index.html"
-              }
-            }' > frontend/package.json
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Install Dependencies
-        run: |
-          cd frontend
-          npm install || echo "npm install failed, continuing..."
-
-      - name: Debug - Check frontend structure before build
-        run: |
-          echo "Frontend directory structure before build:"
-          ls -la frontend
-          
-      - name: Build Frontend
-        run: |
-          cd frontend
-          npm run build || echo "Build failed, creating minimal dist directory"
-          if [ ! -d "dist" ]; then
-            echo "Creating minimal dist directory"
-            mkdir -p dist
-            echo "<!DOCTYPE html><html><head><title>Video Downloader</title></head><body><h1>Video Downloader</h1><p>This is a placeholder page. The actual frontend is still being set up.</p><a href=\"https://fastlk.netlify.app\">Go to API</a></body></html>" > dist/index.html
-          fi
-        env:
-          VITE_API_URL: 'https://fastlk.netlify.app'
-
-      - name: Debug - Check build output
-        run: |
-          echo "Checking if dist directory exists:"
-          ls -la frontend/dist || echo "dist directory not found"
-
-      - name: Create .nojekyll file
-        run: |
-          # Make sure dist directory exists
-          mkdir -p frontend/dist
-          cd frontend/dist
-          touch .nojekyll
-          # Only copy if index.html exists
-          if [ -f "index.html" ]; then
-            cp index.html 404.html
-          else
-            echo "<!DOCTYPE html><html><head><title>Video Downloader</title></head><body><h1>Page Not Found</h1><p>Return to <a href=\"/\">home page</a>.</p></body></html>" > index.html
-            cp index.html 404.html
-          fi
-          # Show the final contents
-          echo "Contents of frontend/dist directory:"
-          ls -la
+          mkdir -p deploy
+          cp index.html deploy/
+          cp 404.html deploy/
+          touch deploy/.nojekyll
+          echo "Contents of deployment directory:"
+          ls -la deploy/
 
       # Deploy to GitHub Pages using JamesIves/github-pages-deploy-action
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: frontend/dist
+          folder: deploy
           branch: gh-pages
           clean: true 
