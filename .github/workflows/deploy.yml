@@ -32,9 +32,14 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           
-          # Copy our HTML files
-          cp index.html deploy/
-          cp 404.html deploy/
+          # Build frontend first
+          cd frontend
+          npm install
+          npm run build
+          cd ..
+          
+          # Copy frontend build files
+          cp -r frontend/dist/* deploy/
           
           # Create essential GitHub Pages files
           touch deploy/.nojekyll
@@ -48,9 +53,11 @@ jobs:
             cp README.md deploy/readme.txt
           fi
           
-          # Show the contents of the deploy directory
+          # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
           ls -la deploy/
+        env:
+          VITE_API_URL: https://fastlk.netlify.app
 
       # Deploy to GitHub Pages using JamesIves/github-pages-deploy-action
       - name: Deploy to GitHub Pages
@@ -58,11 +65,4 @@ jobs:
         with:
           folder: deploy
           branch: gh-pages
-          clean: true
-
-      - name: Build frontend
-        run: |
-          cd frontend
-          npm run build
-        env:
-          VITE_API_URL: https://fastlk.netlify.app/.netlify/functions/server 
+          clean: true 
