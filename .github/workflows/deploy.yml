@@ -90,40 +90,20 @@ jobs:
           # Create .nojekyll file to disable Jekyll processing
           touch dist_deploy/.nojekyll
           
-          # Create a basic index.html file directly
-          echo "Creating a basic index.html template..."
-          echo '<!DOCTYPE html>' > dist_deploy/index.html
-          echo '<html lang="en">' >> dist_deploy/index.html
-          echo '<head>' >> dist_deploy/index.html
-          echo '    <meta charset="UTF-8">' >> dist_deploy/index.html
-          echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' >> dist_deploy/index.html
-          echo '    <title>FastDownloadLK - YouTube Downloader</title>' >> dist_deploy/index.html
-          echo '    <link rel="icon" href="favicon.svg" type="image/svg+xml">' >> dist_deploy/index.html
-          echo '    <style>' >> dist_deploy/index.html
-          echo '        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }' >> dist_deploy/index.html
-          echo '        h1 { color: #0078d7; }' >> dist_deploy/index.html
-          echo '        .container { margin-top: 50px; }' >> dist_deploy/index.html
-          echo '        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }' >> dist_deploy/index.html
-          echo '        button { background-color: #0078d7; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }' >> dist_deploy/index.html
-          echo '    </style>' >> dist_deploy/index.html
-          echo '</head>' >> dist_deploy/index.html
-          echo '<body>' >> dist_deploy/index.html
-          echo '    <h1>FastDownloadLK</h1>' >> dist_deploy/index.html
-          echo '    <p>YouTube Video Downloader</p>' >> dist_deploy/index.html
-          echo '    <div class="container">' >> dist_deploy/index.html
-          echo '        <div>' >> dist_deploy/index.html
-          echo '            <input type="text" id="videoUrl" placeholder="Enter YouTube URL">' >> dist_deploy/index.html
-          echo '            <button onclick="window.location.href='\''index.html'\''">Download</button>' >> dist_deploy/index.html
-          echo '        </div>' >> dist_deploy/index.html
-          echo '        <p>Video downloader application loading...</p>' >> dist_deploy/index.html
-          echo '    </div>' >> dist_deploy/index.html
-          echo '</body>' >> dist_deploy/index.html
-          echo '</html>' >> dist_deploy/index.html
-          
           # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
             echo "Copying frontend/dist files to deployment directory..."
             cp -r frontend/dist/* dist_deploy/
+            
+            # Create 404.html file for GitHub Pages SPA support
+            echo "Creating 404.html for SPA routing..."
+            echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>FastDownloadLK</title><script type="text/javascript">var pathSegmentsToKeep=2;var l=window.location;l.replace(l.protocol+"//"+l.hostname+(l.port?":"+l.port:"")+l.pathname.split("/").slice(0,1+pathSegmentsToKeep).join("/")+"/?"+"/"+ l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g,"~and~")+(l.search?"&"+l.search.slice(1).replace(/&/g,"~and~"):"")+l.hash);</script></head><body></body></html>' > dist_deploy/404.html
+            
+            # Add SPA routing script to index.html
+            if [ -f "dist_deploy/index.html" ]; then
+              echo "Adding SPA routing script to index.html..."
+              awk '/<head>/ {print; print "  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->"; next} 1' dist_deploy/index.html > temp.html && mv temp.html dist_deploy/index.html
+            fi
             
             # Make sure the favicon.svg exists at the root
             if [ -f "frontend/dist/favicon.svg" ] && [ ! -f "dist_deploy/favicon.svg" ]; then
