@@ -57,7 +57,7 @@ jobs:
           npm install
           npm run build
         env:
-          VITE_API_URL: https://fastlk.netlify.app
+          VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
 
       # Verify frontend build
       - name: Verify frontend build
@@ -88,14 +88,33 @@ jobs:
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
             echo "Copying frontend/dist files to deploy directory..."
             cp -r frontend/dist/* deploy/
+            
+            # Make sure the favicon.svg exists at the root
+            if [ -f "frontend/dist/favicon.svg" ] && [ ! -f "deploy/favicon.svg" ]; then
+              echo "Copying favicon.svg to deploy root..."
+              cp frontend/dist/favicon.svg deploy/
+            elif [ ! -f "deploy/favicon.svg" ]; then
+              echo "Creating a basic favicon.svg..."
+              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
+            fi
           # If frontend/dist is empty or doesn't exist, try public directory
           elif [ -d "public" ]; then
             echo "Using public directory as fallback..."
             cp -r public/* deploy/ || echo "Warning: No files in public directory"
+            
+            # Create basic favicon.svg if not exists
+            if [ ! -f "deploy/favicon.svg" ]; then
+              echo "Creating a basic favicon.svg..."
+              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
+            fi
           # Last resort: create a basic HTML file
           else
             echo "Creating basic index.html as fallback..."
             echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
+            
+            # Create basic favicon.svg 
+            echo "Creating a basic favicon.svg..."
+            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
           fi
           
           # Show the contents of the deployment directory

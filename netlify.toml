@@ -12,4 +12,13 @@
 
 [functions]
   external_node_modules = ["express"]
-  node_bundler = "esbuild" 
+  node_bundler = "esbuild"
+
+# Add proper CORS headers for GitHub Pages
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "https://solo89895.github.io"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Origin, X-Requested-With, Content-Type, Accept"
+    Access-Control-Allow-Credentials = "true" 
