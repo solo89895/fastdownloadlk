@@ -7,9 +7,9 @@ on:
 
 # Sets permissions of the GITHUB_TOKEN
 permissions:
-  contents: write
-  pages: write      # To deploy to Pages
-  id-token: write   # To verify the deployment originates from an appropriate source
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   build-and-deploy:
@@ -87,6 +87,11 @@ jobs:
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
 
+      # Configure GitHub Pages
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v3
+      
       # Verify frontend build
       - name: Verify frontend build
         run: |
@@ -152,13 +157,6 @@ jobs:
             echo "Setting up custom domain: $GITHUB_PAGES_CUSTOM_DOMAIN"
             echo "$GITHUB_PAGES_CUSTOM_DOMAIN" > _site/CNAME
           fi
-          
-          # Create docs directory and add .nojekyll to docs as well
-          # This is to prevent Jekyll from trying to build docs directory
-          mkdir -p docs
-          touch docs/.nojekyll
-          mkdir -p docs/assets/css
-          echo '@import "{{ site.theme }}";' > docs/assets/css/style.scss
           
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
