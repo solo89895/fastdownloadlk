@@ -17,10 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout frontend repository
@@ -50,18 +47,36 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      - name: Prepare deployment
+      - name: Create deployment directory
         run: |
-          mkdir -p ./_site
-          cp -r frontend-repo/dist/* ./_site/
-          touch ./_site/.nojekyll
-          cp ./_site/index.html ./_site/404.html
+          # Create a fresh deployment directory
+          rm -rf _site
+          mkdir -p _site
+          
+          # Copy the built files
+          cp -r frontend-repo/dist/* _site/
+          
+          # Create .nojekyll file to disable Jekyll processing
+          touch _site/.nojekyll
+          
+          # Create 404.html for client-side routing
+          cp _site/index.html _site/404.html
+          
+          # List contents to verify
+          ls -la _site/
 
-      - name: Upload Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: ./_site
+          path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2 
