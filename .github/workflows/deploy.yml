@@ -58,6 +58,14 @@ jobs:
           # Create .nojekyll file
           touch docs/.nojekyll
 
+      # Debug step to check directory structure
+      - name: Debug - List repository contents
+        run: |
+          echo "Current directory structure:"
+          ls -la
+          echo "Repository contents:"
+          find . -type d -maxdepth 2 | sort
+
       # Build with Jekyll
       - name: Build with Jekyll
         uses: actions/jekyll-build-pages@v1
@@ -80,12 +88,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
-
-# Debug step: Check repository structure
-- name: Debug - List repository contents
-  run: |
-    echo "Current directory structure:"
-    ls -la
-    echo "Repository contents:"
-    find . -type d -maxdepth 2 | sort 
+        uses: actions/deploy-pages@v2 
