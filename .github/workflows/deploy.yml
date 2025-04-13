@@ -32,50 +32,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '18'
           cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          cache-dependency-path: 'frontend/package-lock.json'
 
-      - name: Debug - List directory structure
+      - name: Install and Build Frontend
         run: |
-          echo "Current directory structure:"
-          ls -la
-          if [ -d "frontend" ]; then
-            echo "Frontend directory exists"
-            ls -la frontend
-          else
-            echo "No frontend directory found"
-          fi
-
-      - name: Build frontend
-        run: |
-          # Create a minimal frontend if it doesn't exist
-          if [ ! -d "frontend" ]; then
-            mkdir -p frontend/dist
-          fi
-
-          # If there's a frontend with package.json, build it
-          if [ -f "frontend/package.json" ]; then
-            cd frontend
-            npm install --no-fund --no-audit --loglevel=error || echo "npm install failed, continuing anyway"
-            npm run build || echo "Build failed, creating a minimal site"
-            cd ..
-          else
-            echo "No package.json found, creating a minimal site"
-          fi
-
-          # Ensure we have a dist directory with content
-          mkdir -p frontend/dist
-          if [ ! -f "frontend/dist/index.html" ]; then
-            echo "Creating a minimal index.html"
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > frontend/dist/index.html
-          fi
-
-          # Create .nojekyll to disable Jekyll
-          touch frontend/dist/.nojekyll
-
+          cd frontend
+          npm install
+          npm run build
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
+
+      - name: Create .nojekyll
+        run: touch frontend/dist/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
