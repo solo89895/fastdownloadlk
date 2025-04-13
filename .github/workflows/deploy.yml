@@ -1,48 +1,37 @@
-name: Deploy Static Frontend
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
+  # Runs on pushes targeting the default branch
   push:
-    branches: ['main']
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+  # Single deploy job since we're just deploying
+  deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # Debug step: Check repository structure
-      - name: Debug - List repository contents
-        run: |
-          echo "Current directory structure:"
-          ls -la
-          echo "Repository contents:"
-          find . -type d -maxdepth 2 | sort
-          echo "Checking for frontend files:"
-          if [ -d "frontend" ]; then
-            echo "Frontend directory contents:"
-            ls -la frontend
-            if [ -f "frontend/package.json" ]; then
-              echo "Package.json content:"
-              cat frontend/package.json
-            else
-              echo "No package.json found in frontend directory"
-            fi
-          else
-            echo "No frontend directory found"
-          fi
-
-      # Set up Node.js for frontend build
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -50,125 +39,55 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
-      # Check for frontend directory and build it
+      - name: Debug - List directory structure
+        run: |
+          echo "Current directory structure:"
+          ls -la
+          if [ -d "frontend" ]; then
+            echo "Frontend directory exists"
+            ls -la frontend
+          else
+            echo "No frontend directory found"
+          fi
+
       - name: Build frontend
         run: |
-          # If frontend directory doesn't exist, create a minimal structure
+          # Create a minimal frontend if it doesn't exist
           if [ ! -d "frontend" ]; then
-            echo "Frontend directory not found, creating minimal structure..."
-            mkdir -p frontend/src frontend/public
+            mkdir -p frontend/dist
           fi
-          
-          # Create a minimal package.json if it doesn't exist or is invalid
-          if [ ! -f "frontend/package.json" ] || ! jq empty frontend/package.json 2>/dev/null; then
-            echo "Creating a minimal package.json..."
-            echo '{
-              "name": "fastdownloadlk-frontend",
-              "version": "1.0.0",
-              "scripts": {
-                "build": "mkdir -p dist && cp -r public/* dist/ 2>/dev/null || echo \"Creating minimal dist\""
-              }
-            }' > frontend/package.json
+
+          # If there's a frontend with package.json, build it
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            npm install --no-fund --no-audit --loglevel=error || echo "npm install failed, continuing anyway"
+            npm run build || echo "Build failed, creating a minimal site"
+            cd ..
+          else
+            echo "No package.json found, creating a minimal site"
           fi
-          
-          # Try to build, but don't fail if it doesn't work
-          cd frontend
-          echo "Installing dependencies (if available)..."
-          npm install --no-fund --no-audit --loglevel=error || echo "npm install failed, continuing anyway"
-          echo "Attempting to build frontend..."
-          npm run build || echo "Build command failed, will create minimal site"
-          
-          # Ensure we have a dist directory with at least an index.html
-          mkdir -p dist
-          if [ ! -f "dist/index.html" ]; then
-            echo "Creating a minimal index.html..."
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > dist/index.html
+
+          # Ensure we have a dist directory with content
+          mkdir -p frontend/dist
+          if [ ! -f "frontend/dist/index.html" ]; then
+            echo "Creating a minimal index.html"
+            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > frontend/dist/index.html
           fi
+
+          # Create .nojekyll to disable Jekyll
+          touch frontend/dist/.nojekyll
+
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
 
-      # Configure GitHub Pages
       - name: Setup Pages
-        id: pages
         uses: actions/configure-pages@v3
-      
-      # Verify frontend build
-      - name: Verify frontend build
-        run: |
-          echo "Checking frontend build output:"
-          if [ -d "frontend/dist" ]; then
-            echo "Frontend dist directory found:"
-            ls -la frontend/dist
-          else
-            echo "WARNING: frontend/dist directory not found, creating it now!"
-            mkdir -p frontend/dist
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > frontend/dist/index.html
-          fi
-      
-      # Create deployment directory (without Jekyll)
-      - name: Prepare deployment files
-        run: |
-          # Create a fresh dist directory in the repository root for deployment
-          mkdir -p _site
-          
-          # Create .nojekyll file to disable Jekyll processing
-          touch _site/.nojekyll
-          
-          # Try to copy frontend build files, or use fallbacks
-          if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
-            echo "Copying frontend/dist files to deployment directory..."
-            cp -r frontend/dist/* _site/
-          else
-            echo "Creating minimal deployment content..."
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > _site/index.html
-          fi
-          
-          # Create style.scss file if Jekyll is looking for it
-          mkdir -p _site/assets/css
-          echo '@import "{{ site.theme }}";' > _site/assets/css/style.scss
-          
-          # Create 404.html file for GitHub Pages SPA support
-          echo "Creating 404.html for SPA routing..."
-          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>FastDownloadLK</title><script type="text/javascript">var pathSegmentsToKeep=2;var l=window.location;l.replace(l.protocol+"//"+l.hostname+(l.port?":"+l.port:"")+l.pathname.split("/").slice(0,1+pathSegmentsToKeep).join("/")+"/?"+"/"+ l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g,"~and~")+(l.search?"&"+l.search.slice(1).replace(/&/g,"~and~"):"")+l.hash);</script></head><body></body></html>' > _site/404.html
-          
-          # Add SPA routing script to index.html
-          if [ -f "_site/index.html" ]; then
-            echo "Adding SPA routing script to index.html..."
-            # First try to add right after <head> tag
-            if grep -q "<head>" _site/index.html; then
-              awk '/<head>/ {print; print "  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->"; next} 1' _site/index.html > temp.html && mv temp.html _site/index.html
-            # If <head> not found, try to add after <html>
-            elif grep -q "<html" _site/index.html; then
-              awk '/<html/ {print; print "<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>"; next} 1' _site/index.html > temp.html && mv temp.html _site/index.html
-            # If all else fails, prepend to the file
-            else
-              echo -e "<html>\n<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>\n$(cat _site/index.html)" > temp.html && mv temp.html _site/index.html
-            fi
-          fi
-          
-          # Make sure the favicon.svg exists
-          if [ ! -f "_site/favicon.svg" ]; then
-            echo "Creating a basic favicon.svg..."
-            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > _site/favicon.svg
-          fi
-          
-          # Create CNAME file if custom domain is specified
-          if [ -n "$GITHUB_PAGES_CUSTOM_DOMAIN" ]; then
-            echo "Setting up custom domain: $GITHUB_PAGES_CUSTOM_DOMAIN"
-            echo "$GITHUB_PAGES_CUSTOM_DOMAIN" > _site/CNAME
-          fi
-          
-          # Show the contents of the deployment directory
-          echo "Contents of deployment directory:"
-          ls -la _site/
 
-      # Upload artifact for deployment
-      - name: Upload GitHub Pages artifact
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
         with:
-          path: _site
+          path: './frontend/dist'
 
-      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2 
