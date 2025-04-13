@@ -51,21 +51,14 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           
-          # Copy our HTML files
-          cp frontend/dist/index.html deploy/
-          cp frontend/dist/404.html deploy/
+          # Copy all frontend build files
+          cp -r frontend/dist/* deploy/
           
-          # Create essential GitHub Pages files
+          # Create .nojekyll file to prevent Jekyll processing
           touch deploy/.nojekyll
           
-          # Create a blank index.md file to prevent README.md from being used
-          echo "" > deploy/index.md
-          
-          # Ensure README.md doesn't override index.html
-          if [ -f "README.md" ]; then
-            echo "Renaming README.md to readme.txt to prevent it from being displayed instead of index.html"
-            cp README.md deploy/readme.txt
-          fi
+          # Create 404.html for client-side routing
+          cp deploy/index.html deploy/404.html
           
           # Show the contents of the deploy directory
           echo "Contents of deployment directory:"
