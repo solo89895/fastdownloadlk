@@ -11,14 +11,8 @@ permissions:
   pages: write
   id-token: write
 
-# Allow only one concurrent deployment
-concurrency:
-  group: "pages"
-  cancel-in-progress: true
-
 jobs:
-  # Build job
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -81,51 +75,37 @@ jobs:
             echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > frontend/dist/index.html
           fi
       
-      # Setup Pages
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-        
-      # Create deployment artifact (without Jekyll)
-      - name: Create deployment artifact
+      # Create deployment directory (without Jekyll)
+      - name: Create deployment directory
         run: |
-          # Create artifact directory
-          mkdir -p _site
+          # Create deploy directory
+          mkdir -p deploy
           
           # Create .nojekyll file to disable Jekyll processing
-          touch _site/.nojekyll
+          touch deploy/.nojekyll
           
           # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
-            echo "Copying frontend/dist files to _site directory..."
-            cp -r frontend/dist/* _site/
+            echo "Copying frontend/dist files to deploy directory..."
+            cp -r frontend/dist/* deploy/
           # If frontend/dist is empty or doesn't exist, try public directory
           elif [ -d "public" ]; then
             echo "Using public directory as fallback..."
-            cp -r public/* _site/ || echo "Warning: No files in public directory"
+            cp -r public/* deploy/ || echo "Warning: No files in public directory"
           # Last resort: create a basic HTML file
           else
             echo "Creating basic index.html as fallback..."
-            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > _site/index.html
+            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
           fi
           
           # Show the contents of the deployment directory
-          echo "Contents of _site directory:"
-          ls -la _site/
+          echo "Contents of deploy directory:"
+          ls -la deploy/
       
-      # Upload artifact
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: _site
-
-  # Deploy job
-  deploy:
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
+      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: deploy
+          branch: gh-pages
+          clean: true 
