@@ -58,4 +58,11 @@ jobs:
         with:
           folder: deploy
           branch: gh-pages
-          clean: true 
+          clean: true
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+        env:
+          VITE_API_URL: https://fastlk.netlify.app/api 
