@@ -33,12 +33,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
 
       - name: Install and Build Frontend
         run: |
           cd frontend
-          npm ci
+          rm -rf node_modules package-lock.json
+          npm install --no-optional
+          npm install @vitejs/plugin-react @rollup/rollup-linux-x64-gnu
           npm run build
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
