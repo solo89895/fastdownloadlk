@@ -82,37 +82,35 @@ jobs:
           # Create .nojekyll file to disable Jekyll processing
           touch dist_deploy/.nojekyll
           
-          # Create a basic index.html file
+          # Create a basic index.html file directly
           echo "Creating a basic index.html template..."
-          cat > basic_index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FastDownloadLK - YouTube Downloader</title>
-    <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <style>
-        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
-        h1 { color: #0078d7; }
-        .container { margin-top: 50px; }
-        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        button { background-color: #0078d7; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
-    </style>
-</head>
-<body>
-    <h1>FastDownloadLK</h1>
-    <p>YouTube Video Downloader</p>
-    <div class="container">
-        <div>
-            <input type="text" id="videoUrl" placeholder="Enter YouTube URL">
-            <button onclick="window.location.href='index.html'">Download</button>
-        </div>
-        <p>Video downloader application loading...</p>
-    </div>
-</body>
-</html>
-EOF
+          echo '<!DOCTYPE html>' > dist_deploy/index.html
+          echo '<html lang="en">' >> dist_deploy/index.html
+          echo '<head>' >> dist_deploy/index.html
+          echo '    <meta charset="UTF-8">' >> dist_deploy/index.html
+          echo '    <meta name="viewport" content="width=device-width, initial-scale=1.0">' >> dist_deploy/index.html
+          echo '    <title>FastDownloadLK - YouTube Downloader</title>' >> dist_deploy/index.html
+          echo '    <link rel="icon" href="favicon.svg" type="image/svg+xml">' >> dist_deploy/index.html
+          echo '    <style>' >> dist_deploy/index.html
+          echo '        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }' >> dist_deploy/index.html
+          echo '        h1 { color: #0078d7; }' >> dist_deploy/index.html
+          echo '        .container { margin-top: 50px; }' >> dist_deploy/index.html
+          echo '        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }' >> dist_deploy/index.html
+          echo '        button { background-color: #0078d7; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }' >> dist_deploy/index.html
+          echo '    </style>' >> dist_deploy/index.html
+          echo '</head>' >> dist_deploy/index.html
+          echo '<body>' >> dist_deploy/index.html
+          echo '    <h1>FastDownloadLK</h1>' >> dist_deploy/index.html
+          echo '    <p>YouTube Video Downloader</p>' >> dist_deploy/index.html
+          echo '    <div class="container">' >> dist_deploy/index.html
+          echo '        <div>' >> dist_deploy/index.html
+          echo '            <input type="text" id="videoUrl" placeholder="Enter YouTube URL">' >> dist_deploy/index.html
+          echo '            <button onclick="window.location.href='\''index.html'\''">Download</button>' >> dist_deploy/index.html
+          echo '        </div>' >> dist_deploy/index.html
+          echo '        <p>Video downloader application loading...</p>' >> dist_deploy/index.html
+          echo '    </div>' >> dist_deploy/index.html
+          echo '</body>' >> dist_deploy/index.html
+          echo '</html>' >> dist_deploy/index.html
           
           # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
@@ -137,20 +135,9 @@ EOF
               echo "Creating a basic favicon.svg..."
               echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
             fi
-          # Last resort: create a basic HTML file
+          # Last resort: use the basic HTML already created
           else
-            echo "Creating basic index.html as fallback..."
-            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > dist_deploy/index.html
-            
-            # Create basic favicon.svg 
-            echo "Creating a basic favicon.svg..."
-            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
-          fi
-          
-          # Ensure index.html exists in the root
-          if [ ! -f "dist_deploy/index.html" ]; then
-            echo "Copying basic index.html to deployment directory..."
-            cp basic_index.html dist_deploy/index.html
+            echo "No build files found, using basic index.html."
           fi
           
           # Show the contents of the deployment directory
