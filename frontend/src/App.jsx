@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import { FaFacebook, FaInstagram, FaYoutube, FaTiktok, FaDownload } from 'react-icons/fa'
 
 function App() {
   const [url, setUrl] = useState('')
@@ -44,7 +45,7 @@ function App() {
     <div>
       <header className="header">
         <a href="/" className="logo">
-          <span>⬇</span> FastDownload<span>LK</span>
+          <FaDownload /> FastDownload<span>LK</span>
         </a>
         <nav className="nav-links">
           <a href="#features">Features</a>
@@ -54,8 +55,8 @@ function App() {
       </header>
 
       <main className="main-content">
-        <h1 className="title">Download Videos from YouTube, Facebook, Instagram & Twitter</h1>
-        <p className="subtitle">Fast, free, and easy video downloads in multiple formats</p>
+        <h1 className="title">Download Videos from<br />Social Media Platforms</h1>
+        <p className="subtitle">Fast, free, and secure video downloads in HD quality</p>
 
         <form onSubmit={handleSubmit} className="download-form">
           <div className="input-group">
@@ -65,10 +66,10 @@ function App() {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
-              placeholder="Paste your video link here"
+              placeholder="Paste your video URL here..."
             />
             <button type="submit" className="download-btn" disabled={loading}>
-              {loading ? 'Downloading...' : 'Download'}
+              {loading ? 'Processing...' : 'Download'}
             </button>
           </div>
         </form>
@@ -78,20 +79,24 @@ function App() {
         <p className="terms">
           By using our service you accept our <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>
         </p>
-        <a href="#how-to" className="how-to">How to download?</a>
+        <a href="#how-to" className="how-to">Learn how to download videos →</a>
 
         <div className="social-icons">
           <a href="#facebook" className="social-icon facebook">
-            <span>facebook.com</span>
+            <FaFacebook />
+            <span>Facebook</span>
           </a>
           <a href="#instagram" className="social-icon instagram">
-            <span>instagram.com</span>
+            <FaInstagram />
+            <span>Instagram</span>
           </a>
           <a href="#youtube" className="social-icon youtube">
-            <span>youtube.com</span>
+            <FaYoutube />
+            <span>YouTube</span>
           </a>
           <a href="#tiktok" className="social-icon tiktok">
-            <span>tiktok.com</span>
+            <FaTiktok />
+            <span>TikTok</span>
           </a>
         </div>
       </main>
