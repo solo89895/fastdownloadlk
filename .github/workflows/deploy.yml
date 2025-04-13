@@ -8,10 +8,15 @@ on:
 # Sets permissions of the GITHUB_TOKEN
 permissions:
   contents: write
+  pages: write      # To deploy to Pages
+  id-token: write   # To verify the deployment originates from an appropriate source
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -98,105 +103,74 @@ jobs:
       # Create deployment directory (without Jekyll)
       - name: Prepare deployment files
         run: |
-          # Create a fresh dist directory in the repository root
-          mkdir -p dist_deploy
+          # Create a fresh dist directory in the repository root for deployment
+          mkdir -p _site
           
           # Create .nojekyll file to disable Jekyll processing
-          touch dist_deploy/.nojekyll
+          touch _site/.nojekyll
           
           # Try to copy frontend build files, or use fallbacks
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
             echo "Copying frontend/dist files to deployment directory..."
-            cp -r frontend/dist/* dist_deploy/
+            cp -r frontend/dist/* _site/
           else
             echo "Creating minimal deployment content..."
-            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > dist_deploy/index.html
+            echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FastDownloadLK</title></head><body><h1>FastDownloadLK</h1><p>Video Download Tool</p></body></html>' > _site/index.html
           fi
+          
+          # Create style.scss file if Jekyll is looking for it
+          mkdir -p _site/assets/css
+          echo '@import "{{ site.theme }}";' > _site/assets/css/style.scss
           
           # Create 404.html file for GitHub Pages SPA support
           echo "Creating 404.html for SPA routing..."
-          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>FastDownloadLK</title><script type="text/javascript">var pathSegmentsToKeep=2;var l=window.location;l.replace(l.protocol+"//"+l.hostname+(l.port?":"+l.port:"")+l.pathname.split("/").slice(0,1+pathSegmentsToKeep).join("/")+"/?"+"/"+ l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g,"~and~")+(l.search?"&"+l.search.slice(1).replace(/&/g,"~and~"):"")+l.hash);</script></head><body></body></html>' > dist_deploy/404.html
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>FastDownloadLK</title><script type="text/javascript">var pathSegmentsToKeep=2;var l=window.location;l.replace(l.protocol+"//"+l.hostname+(l.port?":"+l.port:"")+l.pathname.split("/").slice(0,1+pathSegmentsToKeep).join("/")+"/?"+"/"+ l.pathname.slice(1).split("/").slice(pathSegmentsToKeep).join("/").replace(/&/g,"~and~")+(l.search?"&"+l.search.slice(1).replace(/&/g,"~and~"):"")+l.hash);</script></head><body></body></html>' > _site/404.html
           
           # Add SPA routing script to index.html
-          if [ -f "dist_deploy/index.html" ]; then
+          if [ -f "_site/index.html" ]; then
             echo "Adding SPA routing script to index.html..."
             # First try to add right after <head> tag
-            if grep -q "<head>" dist_deploy/index.html; then
-              awk '/<head>/ {print; print "  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->"; next} 1' dist_deploy/index.html > temp.html && mv temp.html dist_deploy/index.html
+            if grep -q "<head>" _site/index.html; then
+              awk '/<head>/ {print; print "  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->"; next} 1' _site/index.html > temp.html && mv temp.html _site/index.html
             # If <head> not found, try to add after <html>
-            elif grep -q "<html" dist_deploy/index.html; then
-              awk '/<html/ {print; print "<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>"; next} 1' dist_deploy/index.html > temp.html && mv temp.html dist_deploy/index.html
+            elif grep -q "<html" _site/index.html; then
+              awk '/<html/ {print; print "<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>"; next} 1' _site/index.html > temp.html && mv temp.html _site/index.html
             # If all else fails, prepend to the file
             else
-              echo -e "<html>\n<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>\n$(cat dist_deploy/index.html)" > temp.html && mv temp.html dist_deploy/index.html
+              echo -e "<html>\n<head>\n  <!-- Start GitHub Pages SPA redirect script -->\n  <script type=\"text/javascript\">(function(l){if(l.search[1]===\"/\"){var decoded=l.search.slice(1).split(\"&\").map(function(s){return s.replace(/~and~/g,\"&\")}).join(\"?\");window.history.replaceState(null,null,l.pathname.slice(0,-1)+decoded+l.hash)}}(window.location))</script>\n  <!-- End GitHub Pages SPA redirect script -->\n</head>\n$(cat _site/index.html)" > temp.html && mv temp.html _site/index.html
             fi
           fi
           
           # Make sure the favicon.svg exists
-          if [ ! -f "dist_deploy/favicon.svg" ]; then
+          if [ ! -f "_site/favicon.svg" ]; then
             echo "Creating a basic favicon.svg..."
-            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
+            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > _site/favicon.svg
           fi
           
           # Create CNAME file if custom domain is specified
           if [ -n "$GITHUB_PAGES_CUSTOM_DOMAIN" ]; then
             echo "Setting up custom domain: $GITHUB_PAGES_CUSTOM_DOMAIN"
-            echo "$GITHUB_PAGES_CUSTOM_DOMAIN" > dist_deploy/CNAME
+            echo "$GITHUB_PAGES_CUSTOM_DOMAIN" > _site/CNAME
           fi
+          
+          # Create docs directory and add .nojekyll to docs as well
+          # This is to prevent Jekyll from trying to build docs directory
+          mkdir -p docs
+          touch docs/.nojekyll
+          mkdir -p docs/assets/css
+          echo '@import "{{ site.theme }}";' > docs/assets/css/style.scss
           
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
-          ls -la dist_deploy/
+          ls -la _site/
 
-      # Direct git deployment (avoids GitHub Pages API completely)
-      - name: Manual git deployment to gh-pages
-        run: |
-          # Configure git
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          
-          # Save the deployment files to a temp directory
-          mkdir -p /tmp/gh-pages-deploy
-          cp -a dist_deploy/. /tmp/gh-pages-deploy/
-          
-          # Create a .nojekyll file in the temp directory
-          touch /tmp/gh-pages-deploy/.nojekyll
-          
-          # Make sure index.html exists in the temp directory
-          if [ ! -f "/tmp/gh-pages-deploy/index.html" ]; then
-            echo "<html><body><h1>FastDownloadLK</h1><p>Video Download Tool</p><p><a href='https://github.com/solo89895/fastdownloadlk'>GitHub Repository</a></p></body></html>" > /tmp/gh-pages-deploy/index.html
-          fi
-          
-          # Debug - List files in the temp directory
-          echo "Files prepared for deployment:"
-          ls -la /tmp/gh-pages-deploy/
-          
-          # Create and switch to gh-pages branch
-          if git show-ref --verify --quiet refs/heads/gh-pages; then
-            # If gh-pages branch exists, checkout
-            git checkout gh-pages
-          else
-            # If gh-pages branch doesn't exist, create it
-            git checkout --orphan gh-pages
-          fi
-          
-          # Remove all files from the gh-pages branch
-          git rm -rf . || true
-          
-          # Copy deployment files from temp directory to current directory
-          cp -a /tmp/gh-pages-deploy/. .
-          
-          # Add all files to git
-          git add -A
-          
-          # Commit the changes
-          git commit -m "Direct deployment to gh-pages [skip ci]" || echo "No changes to commit"
-          
-          # Push to gh-pages branch
-          git push -f origin gh-pages
-          
-          # Clean up temp directory
-          rm -rf /tmp/gh-pages-deploy
-          
-          # Go back to main branch
-          git checkout main 
+      # Upload artifact for deployment
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: _site
+
+      # Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2 
