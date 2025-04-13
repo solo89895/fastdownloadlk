@@ -32,7 +32,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
 
-      # Build frontend
+      # Check for frontend directory and build it
       - name: Build frontend
         run: |
           # Check if frontend directory exists
@@ -51,9 +51,17 @@ jobs:
             fi
           fi
           
-          cd frontend
-          npm install
-          npm run build
+          # Check package.json exists and has valid content
+          if [ -f "frontend/package.json" ]; then
+            cd frontend
+            echo "Installing dependencies..."
+            npm install --no-fund --no-audit --loglevel=error
+            echo "Building frontend..."
+            npm run build
+          else
+            echo "ERROR: Missing or invalid package.json"
+            exit 1
+          fi
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
 
@@ -140,6 +148,12 @@ jobs:
             echo "No build files found, using basic index.html."
           fi
           
+          # Create CNAME file if custom domain is specified
+          if [ -n "$GITHUB_PAGES_CUSTOM_DOMAIN" ]; then
+            echo "Setting up custom domain: $GITHUB_PAGES_CUSTOM_DOMAIN"
+            echo "$GITHUB_PAGES_CUSTOM_DOMAIN" > dist_deploy/CNAME
+          fi
+          
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
           ls -la dist_deploy/
@@ -176,7 +190,7 @@ jobs:
           git add -A
           
           # Commit the changes
-          git commit -m "Direct deployment to gh-pages [skip ci]"
+          git commit -m "Direct deployment to gh-pages [skip ci]" || echo "No changes to commit"
           
           # Force push to gh-pages branch
           git push -f origin gh-pages-temp:gh-pages
