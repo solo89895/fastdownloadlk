@@ -28,10 +28,27 @@ jobs:
 
       - name: Create deployment directory
         run: |
+          # Create a fresh deploy directory
+          rm -rf deploy
           mkdir -p deploy
+          
+          # Copy our HTML files
           cp index.html deploy/
           cp 404.html deploy/
+          
+          # Create essential GitHub Pages files
           touch deploy/.nojekyll
+          
+          # Create a blank index.md file to prevent README.md from being used
+          echo "" > deploy/index.md
+          
+          # Ensure README.md doesn't override index.html
+          if [ -f "README.md" ]; then
+            echo "Renaming README.md to readme.txt to prevent it from being displayed instead of index.html"
+            cp README.md deploy/readme.txt
+          fi
+          
+          # Show the contents of the deploy directory
           echo "Contents of deployment directory:"
           ls -la deploy/
 
