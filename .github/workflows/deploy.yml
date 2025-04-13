@@ -75,7 +75,8 @@ jobs:
             echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > frontend/dist/index.html
           fi
 
-      - name: Create deployment directory
+      # Prepare for deployment (without Jekyll)
+      - name: Prepare deployment
         run: |
           # Create a fresh deploy directory
           rm -rf deploy
@@ -95,23 +96,14 @@ jobs:
             echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
           fi
           
-          # Create essential GitHub Pages files
+          # Create .nojekyll file to disable Jekyll processing
           touch deploy/.nojekyll
-          
-          # Create a blank index.md file to prevent README.md from being used
-          echo "" > deploy/index.md
-          
-          # Ensure README.md doesn't override index.html
-          if [ -f "README.md" ]; then
-            echo "Renaming README.md to readme.txt to prevent it from being displayed instead of index.html"
-            cp README.md deploy/readme.txt
-          fi
           
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
           ls -la deploy/
 
-      # Deploy to GitHub Pages using JamesIves/github-pages-deploy-action
+      # Deploy directly to GitHub Pages without using Jekyll
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
