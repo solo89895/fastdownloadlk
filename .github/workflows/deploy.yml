@@ -11,8 +11,14 @@ permissions:
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  build-and-deploy:
+  # Build job
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -74,39 +80,50 @@ jobs:
             mkdir -p frontend/dist
             echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > frontend/dist/index.html
           fi
-
-      # Prepare for deployment (without Jekyll)
-      - name: Prepare deployment
+      
+      # Setup Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      # Create deployment artifact (without Jekyll)
+      - name: Create deployment artifact
         run: |
-          # Create a fresh deploy directory
-          rm -rf deploy
-          mkdir -p deploy
+          # Create artifact directory
+          mkdir -p _site
           
-          # Try to copy frontend build files first
+          # Create .nojekyll file to disable Jekyll processing
+          touch _site/.nojekyll
+          
+          # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
-            echo "Copying frontend/dist files to deploy directory..."
-            cp -r frontend/dist/* deploy/
+            echo "Copying frontend/dist files to _site directory..."
+            cp -r frontend/dist/* _site/
           # If frontend/dist is empty or doesn't exist, try public directory
           elif [ -d "public" ]; then
             echo "Using public directory as fallback..."
-            cp -r public/* deploy/ || echo "Warning: No files in public directory"
+            cp -r public/* _site/ || echo "Warning: No files in public directory"
           # Last resort: create a basic HTML file
           else
             echo "Creating basic index.html as fallback..."
-            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
+            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > _site/index.html
           fi
           
-          # Create .nojekyll file to disable Jekyll processing
-          touch deploy/.nojekyll
-          
           # Show the contents of the deployment directory
-          echo "Contents of deployment directory:"
-          ls -la deploy/
+          echo "Contents of _site directory:"
+          ls -la _site/
+      
+      # Upload artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
 
-      # Deploy directly to GitHub Pages without using Jekyll
+  # Deploy job
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: deploy
-          branch: gh-pages
-          clean: true 
+        id: deployment
+        uses: actions/deploy-pages@v2 
