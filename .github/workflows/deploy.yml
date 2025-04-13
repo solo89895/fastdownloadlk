@@ -114,7 +114,9 @@ jobs:
       
       # Upload artifact
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: _site
 
   # Deploy job
   deploy:
