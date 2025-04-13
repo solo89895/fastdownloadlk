@@ -26,20 +26,37 @@ jobs:
           echo "Repository contents:"
           find . -type d -maxdepth 2 | sort
 
+      # Set up Node.js for frontend build
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Build frontend
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+        env:
+          VITE_API_URL: https://fastlk.netlify.app
+
+      # Verify frontend build
+      - name: Verify frontend build
+        run: |
+          echo "Frontend build output:"
+          ls -la frontend/dist
+
       - name: Create deployment directory
         run: |
           # Create a fresh deploy directory
           rm -rf deploy
           mkdir -p deploy
           
-          # Build frontend first
-          cd frontend
-          npm install
-          npm run build
-          cd ..
-          
           # Copy frontend build files
-          cp -r frontend/dist/* deploy/
+          cp -r frontend/dist/* deploy/ || echo "Warning: No files to copy from frontend/dist"
           
           # Create essential GitHub Pages files
           touch deploy/.nojekyll
@@ -56,8 +73,6 @@ jobs:
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
           ls -la deploy/
-        env:
-          VITE_API_URL: https://fastlk.netlify.app
 
       # Deploy to GitHub Pages using JamesIves/github-pages-deploy-action
       - name: Deploy to GitHub Pages
