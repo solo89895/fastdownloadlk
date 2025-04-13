@@ -155,26 +155,36 @@ jobs:
           git config --global user.name "GitHub Actions Bot"
           git config --global user.email "actions@github.com"
           
-          # Create a new orphan branch without any history
-          git checkout --orphan gh-pages-temp
+          # Save the deployment files to a temp directory
+          mkdir -p /tmp/gh-pages-deploy
+          cp -a dist_deploy/. /tmp/gh-pages-deploy/
           
-          # Remove everything from working directory except dist_deploy
-          find . -mindepth 1 -maxdepth 1 -not -name dist_deploy -exec rm -rf {} \;
+          # Create a .nojekyll file in the temp directory
+          touch /tmp/gh-pages-deploy/.nojekyll
           
-          # Copy all files from dist_deploy to current directory
-          cp -a dist_deploy/. .
-          
-          # Create a .nojekyll file
-          touch .nojekyll
-          
-          # Make sure index.html exists
-          if [ ! -f "index.html" ]; then
-            echo "<html><body><h1>FastDownloadLK</h1><p>Video Download Tool</p><p><a href='https://github.com/solo89895/fastdownloadlk'>GitHub Repository</a></p></body></html>" > index.html
+          # Make sure index.html exists in the temp directory
+          if [ ! -f "/tmp/gh-pages-deploy/index.html" ]; then
+            echo "<html><body><h1>FastDownloadLK</h1><p>Video Download Tool</p><p><a href='https://github.com/solo89895/fastdownloadlk'>GitHub Repository</a></p></body></html>" > /tmp/gh-pages-deploy/index.html
           fi
           
-          # Debug - List files in the directory
-          echo "Files to be deployed:"
-          ls -la
+          # Debug - List files in the temp directory
+          echo "Files prepared for deployment:"
+          ls -la /tmp/gh-pages-deploy/
+          
+          # Create and switch to gh-pages branch
+          if git show-ref --verify --quiet refs/heads/gh-pages; then
+            # If gh-pages branch exists, checkout
+            git checkout gh-pages
+          else
+            # If gh-pages branch doesn't exist, create it
+            git checkout --orphan gh-pages
+          fi
+          
+          # Remove all files from the gh-pages branch
+          git rm -rf . || true
+          
+          # Copy deployment files from temp directory to current directory
+          cp -a /tmp/gh-pages-deploy/. .
           
           # Add all files to git
           git add -A
@@ -182,8 +192,11 @@ jobs:
           # Commit the changes
           git commit -m "Direct deployment to gh-pages [skip ci]" || echo "No changes to commit"
           
-          # Force push to gh-pages branch
-          git push -f origin gh-pages-temp:gh-pages
-
+          # Push to gh-pages branch
+          git push -f origin gh-pages
+          
+          # Clean up temp directory
+          rm -rf /tmp/gh-pages-deploy
+          
           # Go back to main branch
           git checkout main 
