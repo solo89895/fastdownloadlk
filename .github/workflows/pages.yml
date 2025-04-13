@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  build-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -45,27 +45,32 @@ jobs:
         env:
           VITE_API_URL: https://fastlk.netlify.app/.netlify/functions/server
 
+      - name: Prepare Pages Artifact
+        run: |
+          # Create a fresh deployment directory
+          rm -rf _site
+          mkdir -p _site
+          
+          # Copy the built files
+          cp -r frontend/dist/* _site/
+          
+          # Create .nojekyll file to disable Jekyll processing
+          touch _site/.nojekyll
+          
+          # Create 404.html for client-side routing
+          cp _site/index.html _site/404.html
+          
+          # List contents to verify
+          ls -la _site/
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      # Create artifact directory
-      - name: Create artifact directory
-        run: |
-          mkdir -p _site
-          cp -r frontend/dist/* _site/
-          touch _site/.nojekyll
-
-      # Upload artifact
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: github-pages
           path: _site
-          if-no-files-found: error
 
-      # Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
-        with:
-          artifact_name: github-pages 
+        uses: actions/deploy-pages@v2 
