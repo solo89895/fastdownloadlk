@@ -44,53 +44,37 @@ jobs:
         env:
           VITE_API_URL: https://fastlk.netlify.app/.netlify/functions/server
 
-      # Setup Ruby for Jekyll
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.0'
-          bundler-cache: true
-
-      # Create necessary Jekyll files
-      - name: Setup Jekyll files
+      # Create deployment directory
+      - name: Create deployment directory
         run: |
-          mkdir -p docs/assets/css
-          echo -e "---\n---\n\n@import \"{{ site.theme }}\";" > docs/assets/css/style.scss
+          # Create a fresh deploy directory
+          rm -rf deploy
+          mkdir -p deploy
           
-          # Copy frontend build to docs
-          cp -r frontend/dist/* docs/
+          # Copy our HTML files
+          cp frontend/dist/index.html deploy/
+          cp frontend/dist/404.html deploy/
           
-          # Create .nojekyll file
-          touch docs/.nojekyll
+          # Create essential GitHub Pages files
+          touch deploy/.nojekyll
+          
+          # Create a blank index.md file to prevent README.md from being used
+          echo "" > deploy/index.md
+          
+          # Ensure README.md doesn't override index.html
+          if [ -f "README.md" ]; then
+            echo "Renaming README.md to readme.txt to prevent it from being displayed instead of index.html"
+            cp README.md deploy/readme.txt
+          fi
+          
+          # Show the contents of the deploy directory
+          echo "Contents of deployment directory:"
+          ls -la deploy/
 
-      # Debug step to check directory structure
-      - name: Debug - List repository contents
-        run: |
-          echo "Current directory structure:"
-          ls -la
-          echo "Repository contents:"
-          find . -type d -maxdepth 2 | sort
-
-      # Build with Jekyll
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./docs
-          destination: ./_site
-
-      # Upload Pages artifact
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./_site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
+      # Deploy to GitHub Pages using JamesIves/github-pages-deploy-action
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: deploy
+          branch: gh-pages
+          clean: true 
