@@ -80,9 +80,9 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      # This should help with the dependency issue
-      - name: Include upload-artifact action explicitly
-        uses: actions/upload-artifact@v3
+      # Using v2 instead of v3 for better compatibility
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v2
         with:
           name: frontend-build
           path: frontend/dist
