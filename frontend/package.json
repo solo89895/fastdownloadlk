@@ -1,0 +1,7 @@
+{
+    "name": "fastdownloadlk-frontend",
+    "version": "1.0.0",
+    "scripts": {
+      "build": "mkdir -p dist && cp -r public/* dist/ 2>/dev/null || echo \"Creating minimal dist\""
+    }
+  }
