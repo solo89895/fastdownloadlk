@@ -1,4 +1,4 @@
-name: Deploy Frontend to GitHub Pages
+name: Deploy Static Frontend
 
 on:
   push:
@@ -74,60 +74,74 @@ jobs:
           fi
       
       # Create deployment directory (without Jekyll)
-      - name: Create deployment directory
+      - name: Prepare deployment files
         run: |
-          # Create deploy directory
-          mkdir -p deploy
+          # Create a fresh dist directory in the repository root
+          mkdir -p dist_deploy
           
           # Create .nojekyll file to disable Jekyll processing
-          touch deploy/.nojekyll
+          touch dist_deploy/.nojekyll
           
           # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
-            echo "Copying frontend/dist files to deploy directory..."
-            cp -r frontend/dist/* deploy/
+            echo "Copying frontend/dist files to deployment directory..."
+            cp -r frontend/dist/* dist_deploy/
             
             # Make sure the favicon.svg exists at the root
-            if [ -f "frontend/dist/favicon.svg" ] && [ ! -f "deploy/favicon.svg" ]; then
+            if [ -f "frontend/dist/favicon.svg" ] && [ ! -f "dist_deploy/favicon.svg" ]; then
               echo "Copying favicon.svg to deploy root..."
-              cp frontend/dist/favicon.svg deploy/
-            elif [ ! -f "deploy/favicon.svg" ]; then
+              cp frontend/dist/favicon.svg dist_deploy/
+            elif [ ! -f "dist_deploy/favicon.svg" ]; then
               echo "Creating a basic favicon.svg..."
-              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
+              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
             fi
           # If frontend/dist is empty or doesn't exist, try public directory
           elif [ -d "public" ]; then
             echo "Using public directory as fallback..."
-            cp -r public/* deploy/ || echo "Warning: No files in public directory"
+            cp -r public/* dist_deploy/ || echo "Warning: No files in public directory"
             
             # Create basic favicon.svg if not exists
-            if [ ! -f "deploy/favicon.svg" ]; then
+            if [ ! -f "dist_deploy/favicon.svg" ]; then
               echo "Creating a basic favicon.svg..."
-              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
+              echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
             fi
           # Last resort: create a basic HTML file
           else
             echo "Creating basic index.html as fallback..."
-            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
+            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > dist_deploy/index.html
             
             # Create basic favicon.svg 
             echo "Creating a basic favicon.svg..."
-            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > deploy/favicon.svg
+            echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
           fi
           
           # Show the contents of the deployment directory
-          echo "Contents of deploy directory:"
-          ls -la deploy/
-      
-      # Deploy to GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
-          publish_branch: gh-pages
-          force_orphan: true
-          cname: fastdownloadlk.com
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
-          full_commit_message: 'Deploy to GitHub Pages [skip ci]' 
+          echo "Contents of deployment directory:"
+          ls -la dist_deploy/
+
+      # Direct git deployment (avoids GitHub Pages API completely)
+      - name: Manual git deployment to gh-pages
+        run: |
+          # Configure git
+          git config --global user.name "GitHub Actions Bot"
+          git config --global user.email "actions@github.com"
+          
+          # Create a new orphan branch without any history
+          git checkout --orphan gh-pages-temp
+          
+          # Clear git staging area
+          git rm -rf --cached .
+          
+          # Add only the dist_deploy directory to git
+          mv dist_deploy/* .
+          mv dist_deploy/.nojekyll .
+          
+          # Commit the changes
+          git add .
+          git commit -m "Direct deployment to gh-pages [skip ci]"
+          
+          # Force push to gh-pages branch
+          git push -f origin gh-pages-temp:gh-pages
+
+          # Go back to main branch
+          git checkout main 
