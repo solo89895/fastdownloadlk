@@ -40,15 +40,14 @@ jobs:
           cache-dependency-path: 'frontend/pnpm-lock.yaml'
 
       - name: Install dependencies
+        working-directory: frontend
         run: |
-          cd frontend
           pnpm install --no-frozen-lockfile
-          pnpm add -D @rollup/rollup-linux-x64-gnu
+          pnpm add -D @rollup/rollup-linux-x64-gnu postcss postcss-import
 
       - name: Build Frontend
-        run: |
-          cd frontend
-          pnpm run build
+        working-directory: frontend
+        run: pnpm run build
         env:
           VITE_API_URL: "https://fastlk.netlify.app/.netlify/functions/server"
 

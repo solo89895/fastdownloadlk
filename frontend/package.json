@@ -19,6 +19,8 @@
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.0.8",
     "@rollup/rollup-linux-x64-gnu": "4.9.0",
-    "rollup": "^4.9.0"
+    "rollup": "^4.9.0",
+    "postcss": "^8.4.31",
+    "postcss-import": "^15.1.0"
   }
 } 
