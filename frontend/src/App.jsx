@@ -41,27 +41,60 @@ function App() {
   }
 
   return (
-    <div className="app">
-      <div className="card">
-        <h1>FastDownloadLK</h1>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="url">Video URL</label>
+    <div>
+      <header className="header">
+        <a href="/" className="logo">
+          <span>⬇</span> FastDownload<span>LK</span>
+        </a>
+        <nav className="nav-links">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#legal">Legal</a>
+        </nav>
+      </header>
+
+      <main className="main-content">
+        <h1 className="title">Download Videos from YouTube, Facebook, Instagram & Twitter</h1>
+        <p className="subtitle">Fast, free, and easy video downloads in multiple formats</p>
+
+        <form onSubmit={handleSubmit} className="download-form">
+          <div className="input-group">
             <input
               type="url"
-              id="url"
+              className="url-input"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               required
-              placeholder="Enter video URL"
+              placeholder="Paste your video link here"
             />
+            <button type="submit" className="download-btn" disabled={loading}>
+              {loading ? 'Downloading...' : 'Download'}
+            </button>
           </div>
-          <button type="submit" disabled={loading}>
-            {loading ? 'Downloading...' : 'Download Video'}
-          </button>
         </form>
+
         {error && <div className="error">Error: {error}</div>}
-      </div>
+
+        <p className="terms">
+          By using our service you accept our <a href="#terms">Terms of Service</a> and <a href="#privacy">Privacy Policy</a>
+        </p>
+        <a href="#how-to" className="how-to">How to download?</a>
+
+        <div className="social-icons">
+          <a href="#facebook" className="social-icon facebook">
+            <span>facebook.com</span>
+          </a>
+          <a href="#instagram" className="social-icon instagram">
+            <span>instagram.com</span>
+          </a>
+          <a href="#youtube" className="social-icon youtube">
+            <span>youtube.com</span>
+          </a>
+          <a href="#tiktok" className="social-icon tiktok">
+            <span>tiktok.com</span>
+          </a>
+        </div>
+      </main>
     </div>
   )
 }

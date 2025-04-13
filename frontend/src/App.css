@@ -1,5 +1,152 @@
 /* Add component-specific styles here */ 
 
+body {
+  margin: 0;
+  background-color: #1a1a1a;
+  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.header {
+  background-color: #1a1a1a;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: white;
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.logo span {
+  color: #9DC209;
+}
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.nav-links a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.main-content {
+  max-width: 800px;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #999;
+  margin-bottom: 2rem;
+}
+
+.download-form {
+  margin-bottom: 2rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.url-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid #333;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+}
+
+.url-input::placeholder {
+  color: #666;
+}
+
+.download-btn {
+  padding: 0.75rem 2rem;
+  background-color: #9DC209;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.download-btn:hover {
+  background-color: #8CAB08;
+}
+
+.download-btn:disabled {
+  background-color: #4a4a4a;
+  cursor: not-allowed;
+}
+
+.terms {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.terms a {
+  color: #9DC209;
+  text-decoration: none;
+}
+
+.how-to {
+  color: #9DC209;
+  text-decoration: none;
+  display: block;
+  margin-top: 1rem;
+}
+
+.social-icons {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.social-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.social-icon.facebook { color: #1877f2; }
+.social-icon.instagram { color: #e4405f; }
+.social-icon.youtube { color: #ff0000; }
+.social-icon.tiktok { color: #000000; }
+
+.error {
+  color: #ff4444;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
 .app {
   min-height: 100vh;
   display: flex;
