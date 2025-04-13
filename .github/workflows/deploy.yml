@@ -1,4 +1,4 @@
-name: Deploy Frontend to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -12,12 +12,13 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Setup Node.js for frontend build
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,6 +26,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      # Build frontend
       - name: Install Frontend Dependencies
         run: |
           cd frontend
@@ -37,25 +39,53 @@ jobs:
         env:
           VITE_API_URL: https://fastlk.netlify.app/.netlify/functions/server
 
-      - name: Prepare Deployment
-        run: |
-          # Create .nojekyll file to disable Jekyll processing
-          touch frontend/dist/.nojekyll
-          
-          # Copy 404.html for client-side routing
-          cp frontend/dist/index.html frontend/dist/404.html
-
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      # Setup Ruby for Jekyll
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          folder: frontend/dist
-          branch: gh-pages
-          clean: true
+          ruby-version: '3.0'
+          bundler-cache: true
 
-      # Debug step: Check repository structure
-      - name: Debug - List repository contents
+      # Create necessary Jekyll files
+      - name: Setup Jekyll files
         run: |
-          echo "Current directory structure:"
-          ls -la
-          echo "Repository contents:"
-          find . -type d -maxdepth 2 | sort 
+          mkdir -p docs/assets/css
+          echo -e "---\n---\n\n@import \"{{ site.theme }}\";" > docs/assets/css/style.scss
+          
+          # Copy frontend build to docs
+          cp -r frontend/dist/* docs/
+          
+          # Create .nojekyll file
+          touch docs/.nojekyll
+
+      # Build with Jekyll
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+
+      # Upload artifact
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./_site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+# Debug step: Check repository structure
+- name: Debug - List repository contents
+  run: |
+    echo "Current directory structure:"
+    ls -la
+    echo "Repository contents:"
+    find . -type d -maxdepth 2 | sort 

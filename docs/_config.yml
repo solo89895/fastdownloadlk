@@ -1,0 +1,16 @@
+title: FastDownloadLK
+description: Video Downloader Application
+theme: jekyll-theme-primer
+
+# Exclude frontend build files from Jekyll processing
+exclude:
+  - frontend/
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - README.md
+  - .gitignore
+  - .env*
+  - vite.config.js
+  - "*.tsx"
+  - "*.ts" 
