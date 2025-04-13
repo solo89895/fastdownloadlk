@@ -10,6 +10,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  deployments: write
 
 # Single deployment
 concurrency:
@@ -17,10 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,32 +43,24 @@ jobs:
         env:
           VITE_API_URL: https://fastlk.netlify.app/.netlify/functions/server
 
-      - name: Prepare Pages Artifact
-        run: |
-          # Create a fresh deployment directory
-          rm -rf _site
-          mkdir -p _site
-          
-          # Copy the built files
-          cp -r frontend/dist/* _site/
-          
-          # Create .nojekyll file to disable Jekyll processing
-          touch _site/.nojekyll
-          
-          # Create 404.html for client-side routing
-          cp _site/index.html _site/404.html
-          
-          # List contents to verify
-          ls -la _site/
-
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          path: _site
+          path: frontend/dist
 
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v2 
