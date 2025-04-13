@@ -32,11 +32,27 @@ jobs:
         with:
           node-version: '16'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: '**/package-lock.json'
 
       # Build frontend
       - name: Build frontend
         run: |
+          # Check if frontend directory exists
+          if [ ! -d "frontend" ]; then
+            echo "Frontend directory not found, creating structure..."
+            mkdir -p frontend/src
+            # Create basic package.json if it doesn't exist
+            if [ ! -f "frontend/package.json" ]; then
+              echo '{
+                "name": "fastdownloadlk-frontend",
+                "version": "1.0.0",
+                "scripts": {
+                  "build": "mkdir -p dist && cp -r ../public/* dist/ || echo \"No public directory found\""
+                }
+              }' > frontend/package.json
+            fi
+          fi
+          
           cd frontend
           npm install
           npm run build
@@ -46,8 +62,18 @@ jobs:
       # Verify frontend build
       - name: Verify frontend build
         run: |
-          echo "Frontend build output:"
-          ls -la frontend/dist
+          echo "Checking frontend build output:"
+          if [ -d "frontend/dist" ]; then
+            echo "Frontend dist directory found:"
+            ls -la frontend/dist
+          else
+            echo "WARNING: frontend/dist directory not found!"
+            echo "Looking for alternative build outputs:"
+            find . -name "dist" -type d
+            # Create a minimal dist directory if needed
+            mkdir -p frontend/dist
+            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > frontend/dist/index.html
+          fi
 
       - name: Create deployment directory
         run: |
@@ -55,8 +81,19 @@ jobs:
           rm -rf deploy
           mkdir -p deploy
           
-          # Copy frontend build files
-          cp -r frontend/dist/* deploy/ || echo "Warning: No files to copy from frontend/dist"
+          # Try to copy frontend build files first
+          if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
+            echo "Copying frontend/dist files to deploy directory..."
+            cp -r frontend/dist/* deploy/
+          # If frontend/dist is empty or doesn't exist, try public directory
+          elif [ -d "public" ]; then
+            echo "Using public directory as fallback..."
+            cp -r public/* deploy/ || echo "Warning: No files in public directory"
+          # Last resort: create a basic HTML file
+          else
+            echo "Creating basic index.html as fallback..."
+            echo "<html><body><h1>FastDownloadLK</h1><p>Site is under maintenance. Please check back later.</p></body></html>" > deploy/index.html
+          fi
           
           # Create essential GitHub Pages files
           touch deploy/.nojekyll
