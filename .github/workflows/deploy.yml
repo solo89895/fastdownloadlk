@@ -82,6 +82,38 @@ jobs:
           # Create .nojekyll file to disable Jekyll processing
           touch dist_deploy/.nojekyll
           
+          # Create a basic index.html file
+          echo "Creating a basic index.html template..."
+          cat > basic_index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastDownloadLK - YouTube Downloader</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 0 auto; padding: 20px; text-align: center; }
+        h1 { color: #0078d7; }
+        .container { margin-top: 50px; }
+        input[type="text"] { width: 70%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background-color: #0078d7; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>FastDownloadLK</h1>
+    <p>YouTube Video Downloader</p>
+    <div class="container">
+        <div>
+            <input type="text" id="videoUrl" placeholder="Enter YouTube URL">
+            <button onclick="window.location.href='index.html'">Download</button>
+        </div>
+        <p>Video downloader application loading...</p>
+    </div>
+</body>
+</html>
+EOF
+          
           # Try to copy frontend build files
           if [ -d "frontend/dist" ] && [ "$(ls -A frontend/dist)" ]; then
             echo "Copying frontend/dist files to deployment directory..."
@@ -115,6 +147,12 @@ jobs:
             echo '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm3.5 8.5l-5 3a.5.5 0 0 1-.75-.4v-6a.5.5 0 0 1 .75-.4l5 3a.5.5 0 0 1 0 .8z" fill="#0078d7"/></svg>' > dist_deploy/favicon.svg
           fi
           
+          # Ensure index.html exists in the root
+          if [ ! -f "dist_deploy/index.html" ]; then
+            echo "Copying basic index.html to deployment directory..."
+            cp basic_index.html dist_deploy/index.html
+          fi
+          
           # Show the contents of the deployment directory
           echo "Contents of deployment directory:"
           ls -la dist_deploy/
@@ -129,15 +167,28 @@ jobs:
           # Create a new orphan branch without any history
           git checkout --orphan gh-pages-temp
           
-          # Clear git staging area
-          git rm -rf --cached .
+          # Remove everything from working directory except dist_deploy
+          find . -mindepth 1 -maxdepth 1 -not -name dist_deploy -exec rm -rf {} \;
           
-          # Add only the dist_deploy directory to git
-          mv dist_deploy/* .
-          mv dist_deploy/.nojekyll .
+          # Copy all files from dist_deploy to current directory
+          cp -a dist_deploy/. .
+          
+          # Create a .nojekyll file
+          touch .nojekyll
+          
+          # Make sure index.html exists
+          if [ ! -f "index.html" ]; then
+            echo "<html><body><h1>FastDownloadLK</h1><p>Video Download Tool</p><p><a href='https://github.com/solo89895/fastdownloadlk'>GitHub Repository</a></p></body></html>" > index.html
+          fi
+          
+          # Debug - List files in the directory
+          echo "Files to be deployed:"
+          ls -la
+          
+          # Add all files to git
+          git add -A
           
           # Commit the changes
-          git add .
           git commit -m "Direct deployment to gh-pages [skip ci]"
           
           # Force push to gh-pages branch
